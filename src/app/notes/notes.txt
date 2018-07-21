@@ -36,3 +36,12 @@
   const filteredNumbers$ = numbers$.pipe(
     map(numbers => numbers.filter(number => number % 2 === 0))
   );
+
+
+3. Create Observables
+- Observables can be created with e.g.
+  * of(1, 2, 3)
+  * from(Array(1, 2, 3)
+  * fromPromise(%PROMISE%)
+  * interval(1000)
+  * concat(first$, second$)
