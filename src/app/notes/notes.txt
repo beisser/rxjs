@@ -1,0 +1,38 @@
+1. General
+- An Observable by time of its definition is just a blueprint
+  -> we can get an instance of this observable by subscribing to it
+  -> each instance opens a new stream of data
+  -> observable should ne suffixed by an '$'
+- Operators: transform an observable into another one
+  -> operators can be chained by the 'pipe'-operator
+  interval$.pipe(
+        map(value => value * 10),
+        tap(value => console.log(value))
+      );
+- the subscribe method of an observable takes 3 arguments:
+  interval$.subscribe(
+    // success
+    value => console.log(value),
+
+    // error, the 'noop' is a special method name if an empty function should be executed
+    noop,
+
+    // completed
+    () => console.log('finished')
+  );
+- Good Practice:
+  * Avoid nested subscribe blocks
+
+
+2. rxjs component design
+- there should not be too much logic in the subscribe call
+  -> does not scale well
+  -> there is the danger of too much subscribe call nesting
+- components should instead be stateless, meaning values should not be stored there
+  -> instead the observable should be passed to the template, using the 'async' pipe there
+  -> a custom subscription is no longer needed
+- observables can be created from existing ones
+  const numbers$ = from(Array(Array(1, 2, 3, 4, 5)));
+  const filteredNumbers$ = numbers$.pipe(
+    map(numbers => numbers.filter(number => number % 2 === 0))
+  );
