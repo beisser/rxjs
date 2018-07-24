@@ -1,6 +1,17 @@
 import { Component, OnInit } from '@angular/core';
 import {interval, noop, Observable, from, of, concat, merge} from 'rxjs';
-import {concatMap, filter, map, shareReplay, tap} from 'rxjs/operators';
+import {
+  concatMap,
+  debounceTime,
+  distinctUntilChanged,
+  exhaustMap,
+  filter,
+  map,
+  mergeMap,
+  shareReplay,
+  switchMap,
+  tap
+} from 'rxjs/operators';
 import {HttpClient} from '@angular/common/http';
 
 @Component({
@@ -23,7 +34,13 @@ export class OperatorsComponent implements OnInit {
     // this.tapExample();
     // this.concatExample();
     // this.concatMapExample();
-    this.mergeExample();
+    // this.mergeExample();
+    // this.mergeMapExample();
+    // this.exhaustMapExample();
+    // this.cancelSubscriptionExample();
+    // this.debounceTimeExample();
+    // this.distinctUntilChainedExample();
+    this.switchMapExample();
   }
 
   /**
@@ -183,5 +200,101 @@ export class OperatorsComponent implements OnInit {
     result$.subscribe(value => console.log(value), error => console.log(error), noop);
   }
 
+  /**
+   * MERGEMAP OPERATOR
+   *
+   * runs multiple observables in parallel and emits the results as they arrive from the
+   * different observables
+   *
+   * flattens all inner observables
+   *
+   * values from all inner observables are emitted without the need to wait for the completion of other ones
+   */
+  mergeMapExample() {
+    const first$ = of(1, 2, 3).pipe(
+      mergeMap(value => this.multiply(value))
+    );
+    first$.subscribe(value => console.log(value), error => console.log(error), noop);
+  }
 
+  /**
+   * EXHAUSTMAP OPERATOR
+   *
+   * as long as an inner observable is running new values emitted from the outer observable are ignored and
+   * discarded meaning this values will never be processed by inner observables (the last part is the difference
+   * to concatMap where the values are not ignored but processed after the completion)
+   *
+   * good for a save button which saves data to the backend. As long as the data is not saved additional clicks
+   * should not be handled
+   */
+  exhaustMapExample() {
+    const first$ = of(1, 2, 3).pipe(
+      exhaustMap(value => this.multiply(value))
+    );
+    first$.subscribe(value => console.log(value), error => console.log(error), noop);
+  }
+
+  /**
+   * CANCEL SUBSCRIPTION
+   *
+   * to unsubscribe / cancel an observable subscription we need to store a reference to it
+   */
+  cancelSubscriptionExample() {
+    const interval1$ = interval(1000);
+
+    const sub = interval1$.subscribe(console.log);
+
+    setTimeout(() => sub.unsubscribe(), 5000);
+  }
+
+  /**
+   * DEBOUNCETIME OPERATOR
+   *
+   * adds a deplay. a value is not emitted immediately but only when the given deplay is over AND if there is
+   * no new value emitted during the delay. If a new value is emitted during the delay the previous one is dropped and the new
+   * value will be emitted when the delay is over. In this case the delay starts over again.
+   */
+  debounceTimeExample() {
+    const interval1$ = interval(1000).pipe(
+      debounceTime(100)
+    );
+
+    const sub = interval1$.subscribe(console.log);
+
+    setTimeout(() => sub.unsubscribe(), 5000);
+  }
+
+  /**
+   * DISTINCTUNTILCHANGED OPERATOR
+   *
+   * if the next value to be emitted equals the one previously emitted the value will not be emitted
+   *
+   * prevents duplicate values
+   */
+  distinctUntilChainedExample() {
+    const first$ = of(1, 2, 2, 3).pipe(
+      distinctUntilChanged()
+    );
+    first$.subscribe(value => console.log(value), error => console.log(error), noop);
+  }
+
+  /**
+   * SWITCHMAP OPERATOR
+   *
+   * enables to pass the emitted values from the outer observable to the inner observable but returns the inner observable /
+   * the inner data stream as a result of the outer observable
+   *
+   * if the inner observable is not completed and a new value is emitted from the outer observable switchMap automatically
+   * unsubscribes / cancels the running inner observable and starts a new inner observable with the new value from the
+   * outer observable
+   *
+   * e.g. perfect for autocomplete because an not completed search is cancelled if a new search term arrives. A new search
+   * is triggered with the new value
+   */
+  switchMapExample() {
+    const first$ = of(1, 2, 3).pipe(
+      switchMap(value => of( value + 1))
+    );
+    first$.subscribe(value => console.log(value), error => console.log(error), noop);
+  }
 }
