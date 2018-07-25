@@ -8,7 +8,7 @@ import {
   filter,
   map,
   mergeMap,
-  shareReplay,
+  shareReplay, startWith,
   switchMap,
   tap
 } from 'rxjs/operators';
@@ -40,7 +40,8 @@ export class OperatorsComponent implements OnInit {
     // this.cancelSubscriptionExample();
     // this.debounceTimeExample();
     // this.distinctUntilChainedExample();
-    this.switchMapExample();
+    // this.switchMapExample();
+    this.startWithExample();
   }
 
   /**
@@ -93,11 +94,18 @@ export class OperatorsComponent implements OnInit {
    * the shareReplay operator solves this problem
    * this operator shares one stream of data over multiple instances
    * it opens one stream of data, and replays this stream of data to all instances
+   *
+   * IMPORTANT: any operators before the shareReplay() will be 'shared', operators after the shareReplay() will
+   * be executed for each subscription!!!
    */
   shareReplayExample() {
 
     const http$ = this.httpClient.get('www.google.de').pipe(
-      shareReplay()
+      // only executed once no matter how many subscriptions are active
+      tap(x => console.log('only once')),
+      shareReplay(),
+      // will be executed for each subscription
+      tap(x => console.log('foreach sub'))
     );
 
     const first$ = http$;
@@ -293,6 +301,19 @@ export class OperatorsComponent implements OnInit {
    */
   switchMapExample() {
     const first$ = of(1, 2, 3).pipe(
+      switchMap(value => of( value + 1))
+    );
+    first$.subscribe(value => console.log(value), error => console.log(error), noop);
+  }
+
+  /**
+   * START WITH OPERATOR
+   *
+   * set an initial value for the stream
+   */
+  startWithExample() {
+    const first$ = of(1, 2, 3).pipe(
+      startWith('start'),
       switchMap(value => of( value + 1))
     );
     first$.subscribe(value => console.log(value), error => console.log(error), noop);
