@@ -6,11 +6,12 @@ import {
   distinctUntilChanged,
   exhaustMap,
   filter,
+  first,
   map,
   mergeMap,
   shareReplay, startWith,
-  switchMap,
-  tap, throttle, throttleTime
+  switchMap, take,
+  tap, throttle, throttleTime, withLatestFrom
 } from 'rxjs/operators';
 import {HttpClient} from '@angular/common/http';
 import {debug, LoggingLevel} from '../shared/debug.operator';
@@ -46,8 +47,10 @@ export class OperatorsComponent implements OnInit {
     // this.switchMapExample();
     // this.startWithExample();
     // this.forkJoinExample();
+    // this.firstAndTakeExample();
+    this.withLatestFromExample();
     // this.customOperatorExample();
-    this.storeServiceExample();
+    // this.storeServiceExample();
   }
 
   /**
@@ -376,6 +379,44 @@ export class OperatorsComponent implements OnInit {
     // values are combined to an array
     joined$.subscribe(value => console.log(value));
 
+  }
+
+  /**
+   * FIRST AND TAKE OPERATOR
+   *
+   * both operators force long running observable to complete. E.g. long running / infinite observables
+   * are the ones created by subjects or interval
+   *
+   * first: completes after the first value
+   * take(2): completes after the second value
+   */
+  firstAndTakeExample() {
+    const first$ = interval(1000);
+    first$.pipe(
+      first()
+    ).subscribe(console.log);
+
+    const second$ = interval(1000);
+    second$.pipe(
+      take(5)
+    ).subscribe(console.log);
+  }
+
+  /**
+   * WITHLATESTFROM OPERATOR
+   *
+   * merges the latest value from another observable into an array (see forkJoin)
+   *
+   * good for situations where a value e.g. an id stored in an observable is needed in another one
+   * so there is no need to manually subscribe and extract the id
+   */
+  withLatestFromExample() {
+    const id$ = of(777);
+    const store$ = of(666, 888);
+
+    store$.pipe(
+      withLatestFrom(id$),
+    ).subscribe(console.log);
   }
 
   customOperatorExample() {
