@@ -45,3 +45,15 @@
   * fromPromise(%PROMISE%)
   * interval(1000)
   * concat(first$, second$)
+  * forkJoin(first$, second$)
+
+
+4. Subjects
+- way to create custom observables
+- different version of subjects
+  * BehaviourSubject: Stores the last emitted value and passes that value also to late subscribers
+  * AsyncSubject: emits the last emitted value before completion. If the observable never completes,
+    no value is ever emitted (good for long running tasks, where only the last value needs to be emitted)
+  * ReplaySubject: all late subscribers will get all observable values
+
+

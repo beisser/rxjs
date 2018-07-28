@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import {interval, noop, Observable, from, of, concat, merge} from 'rxjs';
+import {interval, noop, Observable, from, of, concat, merge, forkJoin} from 'rxjs';
 import {
   concatMap,
   debounceTime,
@@ -10,9 +10,11 @@ import {
   mergeMap,
   shareReplay, startWith,
   switchMap,
-  tap
+  tap, throttle, throttleTime
 } from 'rxjs/operators';
 import {HttpClient} from '@angular/common/http';
+import {debug, LoggingLevel} from '../shared/debug.operator';
+import {StoreService} from '../services/store.service';
 
 @Component({
   selector: 'app-operators',
@@ -24,7 +26,7 @@ import {HttpClient} from '@angular/common/http';
  */
 export class OperatorsComponent implements OnInit {
 
-  constructor(private httpClient: HttpClient) { }
+  constructor(private httpClient: HttpClient, private storeService: StoreService) { }
 
   ngOnInit() {
     // this.mapExample();
@@ -39,9 +41,13 @@ export class OperatorsComponent implements OnInit {
     // this.exhaustMapExample();
     // this.cancelSubscriptionExample();
     // this.debounceTimeExample();
+    // this.throttleExample();
     // this.distinctUntilChainedExample();
     // this.switchMapExample();
-    this.startWithExample();
+    // this.startWithExample();
+    // this.forkJoinExample();
+    // this.customOperatorExample();
+    this.storeServiceExample();
   }
 
   /**
@@ -261,6 +267,8 @@ export class OperatorsComponent implements OnInit {
    * adds a deplay. a value is not emitted immediately but only when the given deplay is over AND if there is
    * no new value emitted during the delay. If a new value is emitted during the delay the previous one is dropped and the new
    * value will be emitted when the delay is over. In this case the delay starts over again.
+   *
+   * one could say: we wait for a value to be stable
    */
   debounceTimeExample() {
     const interval1$ = interval(1000).pipe(
@@ -270,6 +278,29 @@ export class OperatorsComponent implements OnInit {
     const sub = interval1$.subscribe(console.log);
 
     setTimeout(() => sub.unsubscribe(), 5000);
+  }
+
+  /**
+   * THROTTLE AND THROTTLE TIME OPERATOR
+   *
+   * emits a value of the piped observable and then ignores other values for a determined amount of time
+   *
+   * example: a websocket connection sends many values in a short time. With this operator we can limit
+   * the values emitted by taking a value and then waiting a determined time until the next value is accepted
+   *
+   * has to return an observable determining the interval when a new value is accepted
+   */
+  throttleExample() {
+    const interval1$ = interval(500).pipe(
+      throttle(() => interval(1000))
+
+      // DOES THE SAME AS THROTTLE BUT IS EASIER TO READ
+      // throttleTime(1000)
+    );
+
+    const sub = interval1$.subscribe(console.log);
+
+    setTimeout(() => sub.unsubscribe(), 10000);
   }
 
   /**
@@ -318,4 +349,49 @@ export class OperatorsComponent implements OnInit {
     );
     first$.subscribe(value => console.log(value), error => console.log(error), noop);
   }
+
+  /**
+   * FORKJOIN OPERATOR
+   *
+   * allows to run multiple observables in parallel. As soon as all completed the last emitted value for each observable
+   * are combined / joined
+   *
+   * perfect for parallel http requests or long running tasks
+   */
+  forkJoinExample() {
+    const first$ = of(1, 2, 3);
+    const second$ = of(4, 5, 6);
+
+    const joined$ = forkJoin(first$, second$);
+
+    // results of each single observable can be extracted with map
+    joined$
+      .pipe(
+        map(data => {
+          return data[0] + data[1];
+        })
+      )
+      .subscribe(value => console.log(value));
+
+    // values are combined to an array
+    joined$.subscribe(value => console.log(value));
+
+  }
+
+  customOperatorExample() {
+    const first$ = of(1, 2, 3);
+
+    first$.pipe(
+      debug(LoggingLevel.INFO, 'test')
+    ).subscribe();
+  }
+
+  storeServiceExample() {
+    this.storeService.numbers$.subscribe(value => console.log(value));
+    this.storeService.refreshNumbers();
+
+    this.storeService.multiplyBy(4).subscribe(value => console.log(value));
+    this.storeService.edit(1);
+  }
+
 }

@@ -15,7 +15,7 @@ export class ErrorsComponent implements OnInit {
   ngOnInit() {
     // this.catchErrorAndRecoverExample();
     // this.catchErrorAndRethrowExample();
-    this.catchErrorAndRetryExample();
+    // this.catchErrorAndRetryExample();
     // this.finalizeExample();
   }
 
